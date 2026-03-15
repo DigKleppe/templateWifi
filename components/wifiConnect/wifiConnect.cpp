@@ -27,7 +27,6 @@ handles wifi connect process
 #include "updateTask.h"
 #endif
 
-#include "esp_smartconfig.h"
 #include "wifiConnect.h"
 #ifndef CONFIG_FIXED_LAST_IP_DIGIT
 #define CONFIG_FIXED_LAST_IP_DIGIT 0 // ip will be xx.xx.xx.pp    xx from DHCP  , <= 0 disables this
@@ -45,74 +44,12 @@ handles wifi connect process
 
 #define MAX_RETRY_ATTEMPTS 2
 
-#ifdef CONFIG_WPS_ENABLED
-#ifndef PIN2STR
-#define PIN2STR(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5], (a)[6], (a)[7]
-#define PINSTR "%c%c%c%c%c%c%c%c"
-#endif
-static esp_wps_config_t wpsConfig = WPS_CONFIG_INIT_DEFAULT(WPS_MODE);
-static wifi_config_t wps_ap_creds[MAX_WPS_AP_CRED];
-static int s_ap_creds_num = 0;
-#endif
-
-static int s_retry_num = 0;
-void initialiseMdns(char *hostName);
-esp_err_t start_file_server(const char *base_path);
-extern const tCGI CGIurls[];
-extern int resetCause;
-
-char myIpAddress[16];
-bool DHCPoff;
-bool IP6off;
-bool DNSoff;
-bool fileServerOff;
-bool wpsOff;
-bool doStop;
-volatile bool staticIPisSet;
-
-bool enableFixedIP;
-
-esp_netif_t *s_sta_netif = NULL;
-esp_netif_t *s_ap_netif = NULL;
-volatile connectStatus_t connectStatus;
-uint32_t connectRetries;
-uint32_t disconnects;
-
-static void setStaticIp(esp_netif_t *netif);
-esp_err_t saveSettings(void);
-#ifdef USE_EMAIL
-void sendLogInMssg(void);
-#endif
-
-wifiSettings_t wifiSettings;
-
-#ifdef USE_OTA
-wifiSettings_t wifiSettingsDefaults = {
-	ESP_WIFI_SSID, ESP_WIFI_PASS, ipaddr_addr(DEFAULT_IPADDRESS), ipaddr_addr(DEFAULT_GW), " ", " ", FIRMWARE_VERSION, SPIFFS_VERSION, false};
-#else
-wifiSettings_t wifiSettingsDefaults = {
-	ESP_WIFI_SSID,
-	ESP_WIFI_PASS,
-	ipaddr_addr(DEFAULT_IPADDRESS),
-	ipaddr_addr(DEFAULT_GW),
-};
-
-#endif
-
-/* The examples use WiFi configuration that you can set via project configuration menu
-
- If you'd rather not, just change the below entries to strings with
- the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
- */
-
-#define EXAMPLE_ESP_MAXIMUM_RETRY 2
 #define CONFIG_ESP_WPA3_SAE_PWE_BOTH 1
 #define ESP_WIFI_SAE_MODE WPA3_SAE_PWE_BOTH
 #define CONFIG_ESP_WIFI_PW_ID ""
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_PSK
-#define SMARTCONFIGTIMEOUT CONFIG_SMARTCONFIG_TIMEOUT
-#define AP_TIMEOUTTIME 2  // seconds to wait for a connection in AP mode before restarting wifi and going back to scan mode
-#define WPS_TIMEOUTTIME 2 // seconds to wait for a connection in WPS mode
+#define AP_TIMEOUTTIME 120  // seconds to wait for a connection in AP mode before restarting wifi and going back to scan mode
+#define WPS_TIMEOUTTIME 120 // seconds to wait for a connection in WPS mode
 
 #if CONFIG_ESP_WPA3_SAE_PWE_HUNT_AND_PECK
 #define ESP_WIFI_SAE_MODE WPA3_SAE_PWE_HUNT_AND_PECK
@@ -140,6 +77,59 @@ wifiSettings_t wifiSettingsDefaults = {
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_WPA3_PSK
 #elif CONFIG_ESP_WIFI_AUTH_WAPI_PSK
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WAPI_PSK
+#endif
+
+#ifdef CONFIG_WPS_ENABLED
+#ifndef PIN2STR
+#define PIN2STR(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5], (a)[6], (a)[7]
+#define PINSTR "%c%c%c%c%c%c%c%c"
+#endif
+static esp_wps_config_t wpsConfig = WPS_CONFIG_INIT_DEFAULT(WPS_MODE);
+static wifi_config_t wps_ap_creds[MAX_WPS_AP_CRED];
+static int s_ap_creds_num = 0;
+#endif
+
+static int s_retry_num = 0;
+void initialiseMdns(char *hostName);
+esp_err_t start_file_server(const char *base_path);
+extern const tCGI CGIurls[];
+extern int resetCause;
+
+char myIpAddress[16];
+bool DHCPoff;
+bool IP6off;
+bool DNSoff;
+bool fileServerOff;
+bool wpsOff;
+bool doStop;
+volatile bool staticIPisSet;
+bool enableFixedIP;
+
+esp_netif_t *s_sta_netif = NULL;
+esp_netif_t *s_ap_netif = NULL;
+volatile connectStatus_t connectStatus;
+uint32_t connectRetries;
+uint32_t disconnects;
+
+static void setStaticIp(esp_netif_t *netif);
+esp_err_t saveSettings(void);
+#ifdef USE_EMAIL
+void sendLogInMssg(void);
+#endif
+
+wifiSettings_t wifiSettings;
+
+#ifdef USE_OTA
+wifiSettings_t wifiSettingsDefaults = {
+	ESP_WIFI_SSID, ESP_WIFI_PASS, ipaddr_addr(DEFAULT_IPADDRESS), ipaddr_addr(DEFAULT_GW), " ", " ", FIRMWARE_VERSION, SPIFFS_VERSION, false};
+#else
+wifiSettings_t wifiSettingsDefaults = {
+	ESP_WIFI_SSID,
+	ESP_WIFI_PASS,
+	ipaddr_addr(DEFAULT_IPADDRESS),
+	ipaddr_addr(DEFAULT_GW),
+};
+
 #endif
 
 /* FreeRTOS event group to signal when we are connected*/
@@ -207,41 +197,9 @@ static void setStaticIp(esp_netif_t *netif) {
 
 #ifdef CONFIG_WPS_ENABLED
 static bool wpsActive = false;
-
 #endif
 
-#ifdef CONFIG_SMARTCONFIG_ENABLED
-static void smartconfigTask(void *parm) {
-	EventBits_t uxBits;
-	ESP_ERROR_CHECK(esp_smartconfig_set_type(SC_TYPE_ESPTOUCH));
-	smartconfig_start_config_t cfg = SMARTCONFIG_START_CONFIG_DEFAULT();
-	ESP_ERROR_CHECK(esp_smartconfig_start(&cfg));
-	while (1) {
-		uxBits =
-			xEventGroupWaitBits(s_wifi_event_group, CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, (SMARTCONFIGTIMEOUT * 1000) / portTICK_PERIOD_MS);
-		if (uxBits & CONNECTED_BIT) {
-			ESP_LOGI(TAG, "WiFi Connected to ap");
-		}
-		if (uxBits & ESPTOUCH_DONE_BIT) {
-			ESP_LOGI(TAG, "smartconfig over");
-			esp_smartconfig_stop();
-			vTaskDelete(NULL);
-		}
-		if (uxBits == 0) { // timeout
-			ESP_LOGI(TAG, "smartconfig timeout");
-			esp_smartconfig_stop();
-			connectStatus = CONNECTING;
-			s_retry_num = 0;
-			esp_wifi_connect();
-			vTaskDelete(NULL);
-		}
-	}
-}
-#endif
-
-// for softap mode
-static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
-
+static void ap_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
 	if (event_id == WIFI_EVENT_AP_STACONNECTED) {
 		wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *)event_data;
 		ESP_LOGI(TAG, "station " MACSTR " join, AID=%d", MAC2STR(event->mac), event->aid);
@@ -253,7 +211,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
 	}
 }
 
-static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+static void station_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
 #ifdef USE_EMAIL
 	static bool emailIsSend = false;
 #endif
@@ -284,17 +242,7 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
 				}
 			}
 			break;
-#ifdef CONFIG_SMARTCONFIG_ENABLED
-			xTaskCreate(smartconfigTask, "smartconfig_task", 4096, NULL, 3, NULL);
-			connectStatus = SMARTCONFIG_ACTIVE;
-			ESP_LOGI(TAG, "Starting SmartConfig");
-#endif
-
-			// 	s_retry_num = 0;
-			// }
-			// break;
 #ifdef CONFIG_WPS_ENABLED
-
 		case WIFI_EVENT_STA_WPS_ER_SUCCESS: {
 			connectStatus = WPS_SUCCESS;
 			ESP_LOGI(TAG, "WIFI_EVENT_STA_WPS_ER_SUCCESS");
@@ -312,13 +260,6 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
 					ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wps_ap_creds[0]));
 					//		connectStatus = CONNECTED;
 				}
-				/*
-				 * If only one AP credential is received from WPS, there will be no event data and
-				 * esp_wifi_set_config() is already called by WPS modules for backward compatibility
-				 * with legacy apps. So directly attempt connection here.
-				 */
-				//	ESP_ERROR_CHECK(esp_wifi_wps_disable());
-				//  esp_wifi_connect();
 			}
 		} break;
 		case WIFI_EVENT_STA_WPS_ER_FAILED:
@@ -355,7 +296,6 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
 				sendLogInMssg();
 			emailIsSend = true;
 #endif
-
 			if (enableFixedIP && (advSettings.fixedIPdigit > 0)) { // check if the last digit of IP address = CONFIG_FIXED_LAST_IP_DIGIT
 				uint32_t addr = event->ip_info.ip.addr;
 
@@ -382,76 +322,12 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
 			} else {
 				connectStatus = IP_RECEIVED;
 				xEventGroupSetBits(s_wifi_event_group, CONNECTED_BIT);
-				// if (!DNSoff)
-				// 	initialiseMdns(userSettings.moduleName);
 			}
 		} break;
 		default:
 			break;
-		}
-		return;
+		} // end switch
 	}
-#ifndef CONFIG_WPS_ENABLED
-#ifdef CONFIG_SMARTCONFIG_ENABLED
-
-	/*******************************   Smartconfig EVENT  ********************************************************* */
-	if (event_base == SC_EVENT) {
-		ESP_LOGI(TAG, "SC_EVENT %d", (int)event_id);
-		switch (event_id) {
-		case SC_EVENT_SCAN_DONE:
-			ESP_LOGI(TAG, "Scan done");
-			break;
-		case SC_EVENT_FOUND_CHANNEL:
-			ESP_LOGI(TAG, "Found channel");
-			break;
-		case SC_EVENT_GOT_SSID_PSWD: {
-			ESP_LOGI(TAG, "Got SSID and password");
-			connectStatus = CONNECTED;
-			smartconfig_event_got_ssid_pswd_t *evt = (smartconfig_event_got_ssid_pswd_t *)event_data;
-			wifi_config_t wifi_config;
-			uint8_t ssid[33] = {0};
-			uint8_t password[65] = {0};
-			uint8_t rvd_data[33] = {0};
-
-			bzero(&wifi_config, sizeof(wifi_config_t));
-			memcpy(wifi_config.sta.ssid, evt->ssid, sizeof(wifi_config.sta.ssid));
-			memcpy(wifi_config.sta.password, evt->password, sizeof(wifi_config.sta.password));
-			wifi_config.sta.bssid_set = evt->bssid_set;
-			if (wifi_config.sta.bssid_set == true) {
-				memcpy(wifi_config.sta.bssid, evt->bssid, sizeof(wifi_config.sta.bssid));
-			}
-
-			memcpy(ssid, evt->ssid, sizeof(evt->ssid));
-			memcpy(password, evt->password, sizeof(evt->password));
-			ESP_LOGI(TAG, "SSID:%s", ssid);
-			ESP_LOGI(TAG, "PASSWORD:%s", password);
-
-			memcpy((char *)wifiSettings.SSID, ssid, sizeof(wifiSettings.SSID));
-			memcpy((char *)wifiSettings.pwd, password, sizeof(wifiSettings.pwd));
-			saveSettings();
-
-			if (evt->type == SC_TYPE_ESPTOUCH_V2) {
-				ESP_ERROR_CHECK(esp_smartconfig_get_rvd_data(rvd_data, sizeof(rvd_data)));
-				ESP_LOGI(TAG, "RVD_DATA:");
-				for (int i = 0; i < 33; i++) {
-					printf("%02x ", rvd_data[i]);
-				}
-				printf("\n");
-			}
-			ESP_ERROR_CHECK(esp_wifi_disconnect());
-			ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-			esp_wifi_connect();
-		} break;
-		case SC_EVENT_SEND_ACK_DONE:
-			xEventGroupSetBits(s_wifi_event_group, ESPTOUCH_DONE_BIT);
-			break;
-		default:
-			break;
-		} // end switch event_id
-	} // end if event_base == SC_EVENT
-#endif // CONFIG_SMARTCONFIG_ENABLED
-#endif // NOT CONFIG_WPS_ENABLED
-
 	return;
 } // end event_handler
 
@@ -470,14 +346,6 @@ void wifi_init_sta(void) {
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-	// esp_event_handler_instance_t instance_any_id;
-	// esp_event_handler_instance_t instance_got_ip;
-	// ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_any_id));
-	// ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip));
-
-#ifdef CONFIG_SMARTCONFIG_ENABLED
-	ESP_ERROR_CHECK(esp_event_handler_register(SC_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-#endif
 	wifi_config_t wifi_config = {0};
 	wifi_config.sta.threshold.authmode = ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD;
 	wifi_config.sta.sae_pwe_h2e = ESP_WIFI_SAE_MODE;
@@ -541,7 +409,7 @@ void wifi_init_softap(void) {
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-	ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, NULL));
+	ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &ap_event_handler, NULL, NULL));
 
 	wifi_config_t wifi_config = {0};
 	strcpy((char *)wifi_config.ap.ssid, userSettings.moduleName);
@@ -574,14 +442,8 @@ void connectTask(void *pvParameters) {
 
 	esp_event_handler_instance_t instance_any_id;
 	esp_event_handler_instance_t instance_got_ip;
-	ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, &instance_any_id));
-	ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip));
-
-	// wifi_init_softap();
-	// start_file_server("/spiffs");
-	// while (1) {
-	// 	vTaskDelay(100);
-	// }
+	ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &station_event_handler, NULL, &instance_any_id));
+	ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &station_event_handler, NULL, &instance_got_ip));
 
 	while (1) {
 		if (timeOutCounter > 0) {

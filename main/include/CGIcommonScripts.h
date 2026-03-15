@@ -10,6 +10,6 @@
 // int setUserDefaultsScript(char *pBuffer, int count);
 // int setAdvUserDefaultsScript(char *pBuffer, int count);
 // int checkUpdatesScript(char *pBuffer, int count);
-// int forgetWifiScript(char *pBuffer, int count);
+int forgetWifiScript(char *pBuffer, int count);
 
 #endif

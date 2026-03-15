@@ -24,6 +24,6 @@ const tCGI CGIurls[] = {
 	// {"/cgi-bin/getAdvSettings", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)getAdvSettingsScript},
 	// {"/cgi-bin/setUserDefaults", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)setUserDefaultsScript},
 	// {"/cgi-bin/setAdvUserDefaults", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)setAdvUserDefaultsScript},
-	// {"/cgi-bin/forgetWifi", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)forgetWifiScript},
+	{"/cgi-bin/forgetWifi", (tCGIHandler_t)readCGIvalues, (CGIresponseFileHandler_t)forgetWifiScript},
 	{NULL, NULL, NULL} // last
 };

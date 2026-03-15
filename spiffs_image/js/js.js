@@ -1,0 +1,5 @@
+
+function forgetWifi() {
+	getItem("forgetWifi");
+}
+
