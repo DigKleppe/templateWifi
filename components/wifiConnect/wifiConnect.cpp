@@ -50,8 +50,8 @@ handles wifi connect process
 #define ESP_WIFI_SAE_MODE WPA3_SAE_PWE_BOTH
 #define CONFIG_ESP_WIFI_PW_ID ""
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_PSK
-#define AP_TIMEOUTTIME 120	// seconds to wait for a connection in AP mode before restarting wifi and going back to scan mode
-#define WPS_TIMEOUTTIME 120 // seconds to wait for a connection in WPS mode
+#define AP_TIMEOUTTIME 60	// seconds to wait for a connection in AP mode before restarting wifi and going back to scan mode
+#define WPS_TIMEOUTTIME 60 // seconds to wait for a connection in WPS mode
 
 #if CONFIG_ESP_WPA3_SAE_PWE_HUNT_AND_PECK
 #define ESP_WIFI_SAE_MODE WPA3_SAE_PWE_HUNT_AND_PECK

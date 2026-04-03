@@ -16,7 +16,7 @@
 #include "cgiScripts.h"
 
 #define MAX_STRLEN				 32
-#define USERSETTINGS_CHECKSTR "test"
+#define USERSETTINGS_CHECKSTR "test2"
 #define ADVUSERSETTINGS_CHECKSTR "test3"
 #define SYSTEMINFO_CHECKSTR "test"
 

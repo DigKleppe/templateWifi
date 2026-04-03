@@ -21,7 +21,7 @@ bool settingsChanged;
 
 char checkstr[MAX_STRLEN + 1];
 
-userSettings_t userSettingsDefaults = {"FSM", {USERSETTINGS_CHECKSTR}};
+userSettings_t userSettingsDefaults = {"P1monitor", {USERSETTINGS_CHECKSTR}};
 advancedSettings_t advancedSettingsDefaults = {CONFIG_FIXED_LAST_IP_DIGIT, {ADVUSERSETTINGS_CHECKSTR}};
 systemInfo_t systemInfoDefaults = { 0,0,0,0,0,{SYSTEMINFO_CHECKSTR }};
 

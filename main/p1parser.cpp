@@ -160,7 +160,7 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 	logValue.deliveredPower = 0;
 	
 	p1Var_t * p1VarTable = p1VarTable1Phase;
-	printf("chars: %d \n" , nrCharsInBuffer);
+//	printf("chars: %d \n" , nrCharsInBuffer);
 	if ( nrCharsInBuffer > 600)
 		_3Phases = true;
 

@@ -21,6 +21,6 @@
 #define LED_INV_PIN GPIO_NUM_3  // connectionstatus
 
 
-#define SIMULATE
+//#define SIMULATE
 
 #endif /* MAIN_INCLUDE_MAIN_H_ */
