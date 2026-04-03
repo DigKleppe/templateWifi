@@ -36,17 +36,16 @@ var simTs = 0;
 const Utils = ChartUtils.init();
 
 function initChart() {
+
+    loadCeckboxes();
     window.addEventListener('DOMContentLoaded', function () {
         var ctx = document.getElementById("hourChart");
         hourChart = new Chart(ctx, configHour);
         var ctx = document.getElementById("dayChart");
         dayChart = new Chart(ctx, configDay);
-        // if ( solarPanels == 0) {
-        //     hourChart.getDatasetMeta(1).hidden = true;
-        //     hourChart.getDatasetMeta(1).label.hidden = true;
-        // }
-        //     hourChart.defaults.global.legend.display = false;
-        if (solarPanels == 0) {
+        
+        var cb = document.getElementById('cb1');
+        if (!cb.checked) {
             data.datasets.splice(1, 1);
             data2.datasets.splice(1, 1);
         }
@@ -80,8 +79,6 @@ const data = {
             borderRadius: 5,
             borderSkipped: false,
             cubicInterpolationMode: 'monotone',
-            hidden: true,
-
         }
     ]
 }
@@ -259,6 +256,22 @@ function timer() {
         simplot();
         return;
     }
+    var cb = document.getElementById('cb1');
+    if (cb.checked) {
+        if( data.datasets.length == 1 ) {  // add
+            data.datasets.push(data.datasets[0] );
+            data2.datasets.push(data2.datasets[0] );
+            firstRequest = true; //force new chart
+        }
+    }
+    else {
+        if( data.datasets.length == 2 ) { // remove 
+            data.datasets.splice(1, 1);
+            data2.datasets.splice(1, 1);
+             firstRequest = true; //force new chart
+        }
+    }
+
     if (firstRequest) {
         clear();
         arr = getItem("getDayLogMeasValues");
@@ -278,8 +291,7 @@ function timer() {
     var s1 = tbl.rows[TABLEROWPWR].cells[1].innerHTML; // 137 W
     var arr = s1.split(" ");
     var pwr = parseFloat(arr[0]);
-
-    if (solarPanels > 0) { //  and 3 phases	
+    if (tbl.rows.length > 13) { // then 3 phases 
         s1 = tbl.rows[(TABLEROWPWR + 1)].cells[1].innerHTML;
         arr = s1.split(" ");
         pwr += parseFloat(arr[0]);

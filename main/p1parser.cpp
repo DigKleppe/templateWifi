@@ -202,8 +202,8 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 
 #ifdef SIMULATE
 					simValue++;
-					p += sprintf(p, "%d W", simValue);
-					logValue.deliveredPower += simValue; // add power of 3 phases ( if present)
+					p += sprintf(p, "%d W", 1000);
+					logValue.deliveredPower += 1000 ; // simValue; // add power of 3 phases ( if present)
 #else
 					if (len) {
 						f *= 1000.0;
