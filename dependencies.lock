@@ -15,6 +15,7 @@ dependencies:
     version: 5.5.3
 direct_dependencies:
 - espressif/mdns
-manifest_hash: 28587de9ed742af45c111392bdbdc7652a40c4e547efacf47abbfce16123982b
+- idf
+manifest_hash: 03f5f8f0ee3b5b205949fa7dcdf902f4be49d846d055343c6b13f1a303516690
 target: esp32s3
 version: 2.0.0

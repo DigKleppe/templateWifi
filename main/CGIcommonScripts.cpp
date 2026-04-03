@@ -31,9 +31,15 @@ const CGIdesc_t advancedWriteVarDescriptorTable[] = {
 	{NULL, NULL, INT, 1},
 };
 
+
+// const CGIdesc_t advancedWriteVarDescriptorTable[] = {
+// 	{"Laaste IPdigit", &advSettings.fixedIPdigit, INT, 1},
+// 	{NULL, NULL, INT, 1},
+// };
+
 const CGIdesc_t commonInfoTable[] = {{"Firmwareversie", (void *)firmWareVersion, STR, 1},
 									 {"RSSI", (void *)&rssi, INT, 1},
-									 {"Opstarts", &systemInfo.startUps, INT, 1},
+							//		 {"Opstarts", &systemInfo.startUps, INT, 1},
 									 // {"PingTimeouts",&systemInfo.pingTimeOuts, INT, 1 },
 									 // {"PingFailed",&pingFailedCntr, INT, 1 },
 									 // {"SensorTimeouts",&systemInfo.sensorTimeOuts, INT, 1 },

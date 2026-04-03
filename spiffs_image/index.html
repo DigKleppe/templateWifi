@@ -1,21 +1,34 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 
-    <head>
-        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-        <title>Test</title>
-        <link rel="stylesheet" type="text/css" href="styles.css">
-        <script src="js/js.js" type="text/javascript" charset="utf-8"></script>
-        <script src="js/common.js" type="text/javascript" charset="utf-8"></script>
-        </script>
-    </head>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>P1 monitor</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <script src="js/common.js" type="text/javascript" charset="utf-8"></script>
+    <!-- <script src="js/mainPage.js" type="text/javascript" charset="utf-8"></script> -->
+    <script src="js/chart-utils.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/chart.umd.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/chartPage.js" type="text/javascript" charset="utf-8"></script>
+</head>
+
+<script>
+    initChart();
+</script>
+<div>
+    <table class="styled-table" id="headTable"></table>
+    <canvas id="hourChart" "width: 100%; height: 800px" style="border:1px solid #000000; "></canvas>
+    <canvas id="dayChart" "width: 100%; height: 800px style=" border:1px solid #000000;"></canvas>
+    <br>
+    <table class="styled-table" id="infoTable"></table>
+</div>
 
 <body>
-
-<h2>ESP32 Website</h2>
-<img src="pict.jpeg" alt="image" style="width:50%">
-<br>
-<button class="button-3" onclick="forgetWifi()">vergeet Wifi netwerk en reset</button>
-
+    <br>
+    <button class="button-3" onclick="clearLog()">log wissen</button>
+    <button class="button-3" onclick="clearChart()">grafiek wissen</button>
+    <br>
+    <button class="button-3" onclick="forgetWifi()">vergeet Wifi netwerk en reset</button>
 </body>
+
 </html>

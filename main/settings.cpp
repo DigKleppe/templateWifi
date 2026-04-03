@@ -15,15 +15,15 @@
 
 #define STORAGE_NAMESPACE "storage"
 
-//extern settingsDescr_t settingsDescr[];
-
+extern settingsDescr_t settingsDescr[];
+extern int myRssi;
 bool settingsChanged;
 
 char checkstr[MAX_STRLEN + 1];
 
 userSettings_t userSettingsDefaults = {"FSM", {USERSETTINGS_CHECKSTR}};
 advancedSettings_t advancedSettingsDefaults = {CONFIG_FIXED_LAST_IP_DIGIT, {ADVUSERSETTINGS_CHECKSTR}};
-systemInfo_t systemInfoDefaults = { 0,0,0,0,0,0,{SYSTEMINFO_CHECKSTR }};
+systemInfo_t systemInfoDefaults = { 0,0,0,0,0,{SYSTEMINFO_CHECKSTR }};
 
 systemInfo_t systemInfo;
 userSettings_t userSettings;

@@ -33,6 +33,8 @@ handles wifi connect process
 // #define CONFIG_FIXED_LAST_IP_DIGIT  userSettings.fixedIPdigit  // ip will be xx.xx.xx.pp    xx from DHCP  , <= 0 disables this
 #endif
 
+#define CONFIG_WPS_ENABLED true
+
 /*set wps mode via project configuration */
 #if CONFIG_EXAMPLE_WPS_TYPE_PBC
 #define WPS_MODE WPS_TYPE_PBC
@@ -48,7 +50,7 @@ handles wifi connect process
 #define ESP_WIFI_SAE_MODE WPA3_SAE_PWE_BOTH
 #define CONFIG_ESP_WIFI_PW_ID ""
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_PSK
-#define AP_TIMEOUTTIME 120  // seconds to wait for a connection in AP mode before restarting wifi and going back to scan mode
+#define AP_TIMEOUTTIME 120	// seconds to wait for a connection in AP mode before restarting wifi and going back to scan mode
 #define WPS_TIMEOUTTIME 120 // seconds to wait for a connection in WPS mode
 
 #if CONFIG_ESP_WPA3_SAE_PWE_HUNT_AND_PECK
@@ -477,9 +479,21 @@ void connectTask(void *pvParameters) {
 				connectStep = 20;
 				break;
 			case CONNECT_TIMEOUT:
-#ifdef CONFIG_WPS_ENABLED
-				// if (esp_reset_reason() == ESP_RST_SW) // no wps if rebooted from checksystemtask
-				// 	wpsOff = true;
+#ifndef CONFIG_WPS_ENABLED
+				s_retry_num = 0; // keep trying
+				esp_wifi_connect();
+				connectRetries++;
+				connectStatus = CONNECTING;
+				connectStep = 1;
+				break;
+
+			default:
+				break;
+			};
+#else
+				// #ifdef CONFIG_WPS_ENABLED
+				//  if (esp_reset_reason() == ESP_RST_SW) // no wps if rebooted from checksystemtask
+				//  	wpsOff = true;
 
 				if (!wpsOff) {
 					connectStep++;
@@ -661,7 +675,7 @@ void connectTask(void *pvParameters) {
 
 		vTaskDelay(TASKINTERVAL / portTICK_PERIOD_MS);
 	} // end while(1)
-}
+} // end connectTask;
 
 void wifiConnect(void) {
 	if (strlen(wifiSettings.SSID) == 0) {
