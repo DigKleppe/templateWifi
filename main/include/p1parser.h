@@ -27,6 +27,7 @@ typedef struct {
 
 // #define SIMULATE
 extern char p1OutBuffer[P1OUTDATASIZE];
+extern bool _3Phases;
 
 bool parseP1data(char *p1Buffer, int nrCharsInBuffer);
 

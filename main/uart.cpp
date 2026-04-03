@@ -23,7 +23,7 @@
 static const int RX_BUF_SIZE = 2048;  // uart low level
 #define P1_BUF_SIZE			   2048   // result buffer
 
-#define TXD_PIN (GPIO_NUM_5)  // not used
+#define TXD_PIN (GPIO_NUM_5)  // not used , for simulating
 
 #ifdef MYBOARD
 #warning "MYBOARD!"

@@ -20,4 +20,7 @@
 #define LED_PIN 	GPIO_NUM_2  // flashes upon receive P1 frame
 #define LED_INV_PIN GPIO_NUM_3  // connectionstatus
 
+
+#define SIMULATE
+
 #endif /* MAIN_INCLUDE_MAIN_H_ */

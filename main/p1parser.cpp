@@ -69,6 +69,8 @@ Log hourLog(MAXHOURLOGVALUES, sizeof(log_t));
 char p1OutData[P1OUTDATASIZE];
 char p1OutBuffer[P1OUTDATASIZE];
 
+bool _3Phases;
+
 log_t logValue;
 log_t accumulator;
 int logPrescaler;
@@ -77,35 +79,44 @@ volatile bool newP1Data;
 extern int scriptState;
 extern uint32_t timeStamp;
 
-
 #ifdef SIMULATE
 int simValue = 100;
 int m;
 #endif
 
 // @formatter:off
-p1Var_t p1VarTable[] = {
-
-#ifdef SOLARPANELS
-#ifdef _3PHASE
-	{"1-0:21.7.0", "Actueel opgenomen vermogen L1", 1}, {"1-0:41.7.0", "Actueel opgenomen vermogen L2", 1},
-	{"1-0:61.7.0", "Actueel opgenomen vermogen L3", 1}, {"1-0:22.7.0", "Actueel geleverd vermogen L1", 2},
-	{"1-0:42.7.0", "Actueel geleverd vermogen L2", 2}, {"1-0:62.7.0", "Actueel geleverd vermogen L3", 2}, {"1-0:32.7.0", "Spanning L1", 3},
-	{"1-0:52.7.0", "Spanning L2", 3}, {"1-0:72.7.0", "Spanning L3", 3}, {"1-0:1.8.1", "Opgenomen energie tarief 1", 0},
-	{"1-0:1.8.2", "Opgenomen energie tarief 2", 0}, {"1-0:2.8.1", "Geleverde energie tarief 1", 0}, {"1-0:2.8.2", "Geleverde energie tarief 2", 0},
-	{"0-0:96.7.21", "Korte onderbrekingen", 0}, {"0-0:96.7.9", "Lange onderbrekingen", 0},
+p1Var_t p1VarTable3Phases[] = {
+	{"1-0:21.7.0", "Actueel opgenomen vermogen L1", 1}, 
+	{"1-0:41.7.0", "Actueel opgenomen vermogen L2", 1},
+	{"1-0:61.7.0", "Actueel opgenomen vermogen L3", 1},
+	 {"1-0:22.7.0", "Actueel geleverd vermogen L1", 2},
+	{"1-0:42.7.0", "Actueel geleverd vermogen L2", 2}, 
+	{"1-0:62.7.0", "Actueel geleverd vermogen L3", 2},
+	{"1-0:32.7.0", "Spanning L1", 3},
+	{"1-0:52.7.0", "Spanning L2", 3},
+	{"1-0:72.7.0", "Spanning L3", 3},
+	{"1-0:1.8.1", "Opgenomen energie tarief 1", 0},
+	{"1-0:1.8.2", "Opgenomen energie tarief 2", 0},
+	{"1-0:2.8.1", "Geleverde energie tarief 1", 0},
+	{"1-0:2.8.2", "Geleverde energie tarief 2", 0},
+	{"0-0:96.7.21", "Korte onderbrekingen", 0},
+	{"0-0:96.7.9", "Lange onderbrekingen", 0},
 	//	{ "1-0:99.97.0","Onderbrekingslog",4 },
 	{"", "", 0},
-#endif
+};
 
-#else // no panels 1 phase
-	{"1-0:21.7.0", "Actueel opgenomen vermogen", 1}, {"1-0:32.7.0", "Voltage", 3},
-	{"1-0:1.8.1", "Geleverd tarief 1", 0},			 {"1-0:1.8.2", "Geleverd tarief 2", 0},
-	{"0-0:96.7.21", "Korte onderbrekingen", 0},		 {"0-0:96.7.9", "Lange onderbrekingen", 0},
-	{"1-0:99.97.0", "Onderbrekingslog", 4},			 {"1-0:32.32.0", "Spanningsdalen", 0},
-	{"1-0:32.36.0", "Spanningspieken", 0},			 {"", "", 0}};
-
-#endif
+p1Var_t p1VarTable1Phase[] = {
+	{"1-0:21.7.0", "Actueel opgenomen vermogen", 1}, 
+	{"1-0:32.7.0", "Voltage", 3},
+	{"1-0:1.8.1", "Geleverd tarief 1", 0},
+	{"1-0:1.8.2", "Geleverd tarief 2", 0},
+	{"0-0:96.7.21", "Korte onderbrekingen", 0},
+	{"0-0:96.7.9", "Lange onderbrekingen", 0},
+	{"1-0:99.97.0", "Onderbrekingslog", 4},
+	{"1-0:32.32.0", "Spanningsdalen", 0},
+	{"1-0:32.36.0", "Spanningspieken", 0},	
+	{"", "", 0}
+};
 
 	// @formatter:on
 
@@ -146,10 +157,15 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 	int len;
 	float f;
 	logValue.power = 0;
-#ifdef SOLARPANELS
 	logValue.deliveredPower = 0;
-#endif
+	
+	p1Var_t * p1VarTable = p1VarTable1Phase;
+	printf("chars: %d \n" , nrCharsInBuffer);
+	if ( nrCharsInBuffer > 600)
+		_3Phases = true;
 
+	if ( _3Phases)
+		p1VarTable = p1VarTable3Phases;
 	do {
 		b = strstr(p1Buffer, p1VarTable[n].p1ID); // find ID
 		if (b != NULL) {
@@ -179,7 +195,6 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 						p += sprintf(p, "%d W", (int)f);
 					}
 #endif
-
 					break;
 
 				case 2:							   // Power delivered, set from kW to W

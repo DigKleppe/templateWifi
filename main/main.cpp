@@ -3,7 +3,8 @@
  . /home/dig/esp/esp-idf/export.sh
  idf.py monitor -p /dev/ttyUSB2./export
 
- -s ${openocd_path}/share/openocd/scripts -f interface/ftdi/esp32_devkitj_v1.cfg -f target/esp32.cfg -c "program_esp /mnt/linuxData/projecten/git/thermostaat/SensirionSCD30/build//app.bin 0x10000 verify"
+ -s ${openocd_path}/share/openocd/scripts -f interface/ftdi/esp32_devkitj_v1.cfg -f target/esp32.cfg -c "program_esp
+ /mnt/linuxData/projecten/git/thermostaat/SensirionSCD30/build//app.bin 0x10000 verify"
 
  */
 
@@ -16,8 +17,8 @@
 #include "freertos/task.h"
 #include "esp_freertos_hooks.h"
 
-#include "esp_system.h"
 #include "driver/gpio.h"
+#include "esp_system.h"
 
 #include "esp_http_client.h"
 #include "esp_image_format.h"
@@ -25,15 +26,15 @@
 
 #include "esp_wifi.h"
 
-#include "nvs_flash.h"
-#include "esp_netif.h"
 #include "esp_event.h"
+#include "esp_netif.h"
 #include "mdns.h"
+#include "nvs_flash.h"
 
-#include "wifiConnect.h"
-#include "settings.h"
 #include "main.h"
 #include "p1parser.h"
+#include "settings.h"
+#include "wifiConnect.h"
 
 #include "scripts.h"
 
@@ -52,11 +53,11 @@ void uartRxTask(void *arg);
 void uartTxTask(void *arg);
 extern const char _3PhaseSimData[];
 
-
 extern "C" {
 void app_main() {
 	esp_err_t err;
 	bool toggle = false;
+	 TickType_t xLastWakeTime;
 
 	esp_rom_gpio_pad_select_gpio(LED_PIN);
 	gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);
@@ -83,7 +84,7 @@ void app_main() {
 	ESP_ERROR_CHECK(init_spiffs());
 
 	err = loadSettings();
-	getSensorNameScript(NULL, 0);  // pull in  scripts
+	getSensorNameScript(NULL, 0); // pull in  scripts
 
 	wifiConnect();
 
@@ -97,24 +98,28 @@ void app_main() {
 	gpio_set_level(LED_PIN, 0);
 	gpio_set_level(LED_INV_PIN, 1);
 
-	xTaskCreate(uartRxTask, "uartRxTask", 1024 * 3, NULL, configMAX_PRIORITIES-1, NULL);
-
-
-#ifdef SIMULATE		//parseP1data( (char *)_3PhaseSimData, strlen((char *)_3PhaseSimData));
-	xTaskCreate(uartTxTask, "uartTxTask", 1024, NULL, configMAX_PRIORITIES-1, NULL);  // test only
+#ifndef SIMULATE 
+xTaskCreate(uartRxTask, "uartRxTask", 1024 * 3, NULL, configMAX_PRIORITIES - 1, NULL);
+//	xTaskCreate(uartTxTask, "uartTxTask", 1024, NULL, configMAX_PRIORITIES-1, NULL);  // test only
 #endif
 
+
+     xLastWakeTime = xTaskGetTickCount ();
+
 	while (1) {
-
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
+		vTaskDelayUntil(  &xLastWakeTime, 10 / portTICK_PERIOD_MS);
 		upTime++;
+		timeStamp++;
 
+#ifdef SIMULATE
+		parseP1data((char *) _3PhaseSimData, strlen(_3PhaseSimData));
+#endif
 		if (connectStatus != IP_RECEIVED) {
 			toggle = !toggle;
 			gpio_set_level(LED_PIN, toggle);
 			gpio_set_level(LED_INV_PIN, !toggle);
 		} else {
-		//	gpio_set_level(LED_PIN, false);
+			//	gpio_set_level(LED_PIN, false);
 
 			// if (wifiSettings.updated) {
 			// 	wifiSettings.updated = false;
@@ -125,9 +130,8 @@ void app_main() {
 				vTaskDelay(1000 / portTICK_PERIOD_MS);
 				saveSettings();
 			}
-		//	stats_display();
+			//	stats_display();
 		}
 	}
 }
 }
-
