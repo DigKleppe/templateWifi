@@ -35,6 +35,8 @@ function getItem(item) {
 	}
 }
 
+// xxx=vvvv\ryyy=xxxx\r
+
 function makeInfoTable(descriptorData , tableName) {
 	var tbl = document.getElementById(tableName);
 	var x = tbl.rows.length;
@@ -49,7 +51,7 @@ function makeInfoTable(descriptorData , tableName) {
 
 //	var rows = descriptorData.split("\n");
 	var rows = descriptorData.split("\r");   
-	for (var i = 0; i < rows.length ; i++) {
+	for (var i = 0; i < rows.length-1 ; i++) {
 		var row = document.createElement("tr");
 		if (i == 0) {
 			colls = rows[i].split(",");

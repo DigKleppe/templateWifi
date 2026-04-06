@@ -14,7 +14,6 @@ const lineWidth = 3;
 const TABLEROWPWR			= 1;
 const TABLEROWVOLTAGE		= 2;
 
-var solarPanels = 0;
 var hourChart;
 var dayChart;
 var lastTimeStamp = 0;
@@ -32,6 +31,7 @@ var accumulatedVoltage = 0;
 var presc = 3;
 var simVal = 0;
 var simTs = 0;
+var showDeliveredPower = true; 
 
 const Utils = ChartUtils.init();
 
@@ -48,6 +48,7 @@ function initChart() {
         if (!cb.checked) {
             data.datasets.splice(1, 1);
             data2.datasets.splice(1, 1);
+            showDeliveredPower = false;
         }
         if (SIMULATE)
             //  plotTest();
@@ -262,6 +263,7 @@ function timer() {
             data.datasets.push(data.datasets[0] );
             data2.datasets.push(data2.datasets[0] );
             firstRequest = true; //force new chart
+            showDeliveredPower = true;
         }
     }
     else {
@@ -269,6 +271,7 @@ function timer() {
             data.datasets.splice(1, 1);
             data2.datasets.splice(1, 1);
              firstRequest = true; //force new chart
+             showDeliveredPower = false;
         }
     }
 
@@ -282,9 +285,6 @@ function timer() {
     }
     str = getInfo('getInfoValues', 'infoTable'); // make and fill table
     firstRequest = false;
-
-    //	str = getItem ("getInfoValues");  // all items 
-    //	updateDataTable( "infoTable", str);
 
     // read data for actual power and voltage in table
     var tbl = document.getElementById("infoTable");
@@ -319,9 +319,12 @@ function timer() {
 
     accumulatedPwr += pwr;
 
-    str = "Verbruik vandaag:," + (energyToday / 1000).toFixed(3) + " kWh";
-    updateInfoTable(str, "headTable");
-
+    str = "Verbruik vandaag:" + (energyToday / 1000).toFixed(3) + "kWh,Opgenomen:" + pwr.toFixed(3) + "W";
+    if ( showDeliveredPower)
+        str = str +",Geleverd:" + deliveredPwr.toFixed(3) + "W";
+    
+    str = str +"\r";
+    makeInfoTable(str, "headTable");
     str = arr[0];
     s1 = tbl.rows[TABLEROWVOLTAGE].cells[1].innerHTML; // 230.5*W
     arr = s1.split("*");
