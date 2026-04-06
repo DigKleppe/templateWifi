@@ -63,7 +63,8 @@
 #define MAXDAYLOGVALUES ((24 * 60 * 60) / LOGINTERVAL) // for dayLog
 #define MAXHOURLOGVALUES 3600
 
-#define GLICHVALUE 200 // suppress single peak if delta pwr above this value ( fridge!)
+#define GLICHVALUE 300 // suppress GLICHCNT peaks if delta pwr above this value ( fridge!)
+#define GLICHCNT 2
 
 Log dayLog(MAXDAYLOGVALUES, sizeof(log_t));
 Log hourLog(MAXHOURLOGVALUES, sizeof(log_t));
@@ -76,7 +77,7 @@ bool _3Phases;
 log_t logValue;
 log_t accumulator;
 int logPrescaler = 2;
-bool glichDetected;
+int glichCntr;
 int lastValue;
 
 volatile bool newP1Data;
@@ -193,14 +194,15 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 						p += sprintf(p, "%d W", (int)f);
 					}
 					if (logValue.power > lastValue + GLICHVALUE) {
-						if (!glichDetected) {
-							logValue.power = lastValue; // skip this single sampe , replace by previous one
-							glichDetected = true;
+						if (glichCntr++ <= GLICHCNT) {
+							logValue.power = lastValue; // skip this sampe , replace by previous one
 						}
-					} else
-						glichDetected = false;
-
-					lastValue = logValue.power;
+						else
+							lastValue = logValue.power;
+					} else {
+						glichCntr = 0;
+						lastValue = logValue.power;
+					}
 #endif
 					break;
 
