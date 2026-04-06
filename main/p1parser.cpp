@@ -265,12 +265,11 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 			}
 		}
 		n++;
-
 	} while (strlen(p1VarTable[n].p1ID) != 0);
 
 	memcpy(p1OutBuffer, p1OutData, sizeof(p1OutBuffer));
 	newP1Data = true;
-
+	logValue.timeStamp = timeStamp;
 	hourLog.add(&logValue);
 
 	accumulator.power += logValue.power;
@@ -279,7 +278,6 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 
 	if (--logPrescaler == 0) {
 		logPrescaler = LOGINTERVAL;
-		logValue.timeStamp = timeStamp;
 		logValue.deliveredPower = accumulator.deliveredPower / LOGINTERVAL; // average
 		logValue.power = accumulator.power / LOGINTERVAL;
 		logValue.voltage = accumulator.voltage / LOGINTERVAL;

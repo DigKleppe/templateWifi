@@ -12,6 +12,7 @@ int getRTMeasValuesScript(char *pBuffer, int count) ;
 int getNewMeasValuesScript(char *pBuffer, int count);
 int getDayLogScript(char *pBuffer, int count);
 int getHourLogScript(char *pBuffer, int count);
+int clearLogScript(char *pBuffer, int count);
 int getInfoValuesScript (char *pBuffer, int count);
 int saveSettingsScript (char *pBuffer, int count);
 int cancelSettingsScript (char *pBuffer, int count);

@@ -274,7 +274,6 @@ function timer() {
              showDeliveredPower = false;
         }
     }
-
     if (firstRequest) {
         clear();
         arr = getItem("getDayLogMeasValues");
@@ -319,9 +318,9 @@ function timer() {
 
     accumulatedPwr += pwr;
 
-    str = "Verbruik vandaag:" + (energyToday / 1000).toFixed(0) + "kWh,Opgenomen:" + pwr.toFixed(0) + "W";
+    str = "Verbruik vandaag: " + (energyToday / 1000).toFixed(0) + "kWh,Verbruik: " + pwr.toFixed(0) + "W";
     if ( showDeliveredPower)
-        str = str +",Geleverd:" + deliveredPwr.toFixed(0) + "W";
+        str = str +",Opgewekt: " + deliveredPwr.toFixed(0) + "W";
     
     str = str +"\r";
     makeInfoTable(str, "headTable");
@@ -362,8 +361,6 @@ function plotTest() {
     dayChart.update();
 }
 
-
-
 function simplot() {
     var value;
     for (let idx = 0; idx < 100; idx++) {
@@ -371,7 +368,6 @@ function simplot() {
 
         for (let idx2 = 0; idx2 < 4; idx2++) {
             value = value + ((1 + Math.cos(simVal) + idx2).toString() + ',');
-
         }
         value = value + '\n';
         simTs++;
@@ -381,7 +377,6 @@ function simplot() {
         plotLog(dayChart, value);
         presc = 3;
     }
-
     plotLog(hourChart, value);
 
 }
