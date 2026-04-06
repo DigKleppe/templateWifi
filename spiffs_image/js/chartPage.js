@@ -319,9 +319,9 @@ function timer() {
 
     accumulatedPwr += pwr;
 
-    str = "Verbruik vandaag:" + (energyToday / 1000).toFixed(3) + "kWh,Opgenomen:" + pwr.toFixed(3) + "W";
+    str = "Verbruik vandaag:" + (energyToday / 1000).toFixed(0) + "kWh,Opgenomen:" + pwr.toFixed(0) + "W";
     if ( showDeliveredPower)
-        str = str +",Geleverd:" + deliveredPwr.toFixed(3) + "W";
+        str = str +",Geleverd:" + deliveredPwr.toFixed(0) + "W";
     
     str = str +"\r";
     makeInfoTable(str, "headTable");

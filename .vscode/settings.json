@@ -2,7 +2,8 @@
     "C_Cpp.intelliSenseEngine": "default",
     "idf.espIdfPath": "/home/dig/esp/v5.5.2/esp-idf",
     "idf.openOcdConfigs": [
-        "board/esp32s3-builtin.cfg"
+        "interface/ftdi/esp_ftdi.cfg",
+        "target/esp32s2.cfg"
     ],
     "idf.port": "/dev/ttyACM0",
     "idf.toolsPath": "/home/dig/.espressif",
@@ -10,7 +11,7 @@
     "idf.pythonInstallPath": "/usr/bin/python3",
     "idf.currentSetup": "/home/dig/.espressif/v5.5.3/esp-idf",
     "idf.customExtraVars": {
-        "IDF_TARGET": "esp32s3"
+        "IDF_TARGET": "esp32s2"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

@@ -20,7 +20,7 @@ Log::Log(int _maxLogValues, int _logTypeSize) {
 	logTypeSize = _logTypeSize;
 
 #ifdef CONFIG_SPIRAM
-	pLogBuffer =(uint8_t *)  heap_caps_malloc(maxValues * _logTypeSize), MALLOC_CAP_SPIRAM);
+	pLogBuffer =(uint8_t *)  heap_caps_malloc((maxValues * _logTypeSize), MALLOC_CAP_SPIRAM);
 #else
 	pLogBuffer = (uint8_t *)malloc(maxValues * logTypeSize);
 #endif

@@ -11,8 +11,8 @@
 static const char *TAG = "ledTask";
 
 #define LED_TYPE LED_MODEL_WS2812
-#define LED_GPIO1 GPIO_NUM_48 // on s3 board   47 // on s3 mini board
-#define LED_GPIO2 GPIO_NUM_11 // on keyledprint
+#define LED_GPIO1 GPIO_NUM_2 // on 48 s3 board   47 // on s3 mini board
+
 
 #define BRIGHTNESS 20
 
