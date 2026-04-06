@@ -75,7 +75,7 @@ bool _3Phases;
 
 log_t logValue;
 log_t accumulator;
-int logPrescaler;
+int logPrescaler = 2;
 bool glichDetected;
 int lastValue;
 
@@ -200,7 +200,7 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 					} else
 						glichDetected = false;
 
-					lastValue = logValue.deliveredPower;
+					lastValue = logValue.power;
 #endif
 					break;
 
