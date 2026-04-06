@@ -51,10 +51,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "Log.h"
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "Log.h"
 #include "main.h"
 #include "scripts.h"
 
@@ -62,6 +62,8 @@
 #define LOGINTERVAL (5 * 60)
 #define MAXDAYLOGVALUES ((24 * 60 * 60) / LOGINTERVAL) // for dayLog
 #define MAXHOURLOGVALUES 3600
+
+#define GLICHVALUE 200 // suppress single peak if delta pwr above this value ( fridge!)
 
 Log dayLog(MAXDAYLOGVALUES, sizeof(log_t));
 Log hourLog(MAXHOURLOGVALUES, sizeof(log_t));
@@ -74,6 +76,8 @@ bool _3Phases;
 log_t logValue;
 log_t accumulator;
 int logPrescaler;
+bool glichDetected;
+int lastValue;
 
 volatile bool newP1Data;
 extern int scriptState;
@@ -86,11 +90,11 @@ int m;
 
 // @formatter:off
 p1Var_t p1VarTable3Phases[] = {
-	{"1-0:21.7.0", "Actueel opgenomen vermogen L1", 1}, 
+	{"1-0:21.7.0", "Actueel opgenomen vermogen L1", 1},
 	{"1-0:41.7.0", "Actueel opgenomen vermogen L2", 1},
 	{"1-0:61.7.0", "Actueel opgenomen vermogen L3", 1},
-	 {"1-0:22.7.0", "Actueel geleverd vermogen L1", 2},
-	{"1-0:42.7.0", "Actueel geleverd vermogen L2", 2}, 
+	{"1-0:22.7.0", "Actueel geleverd vermogen L1", 2},
+	{"1-0:42.7.0", "Actueel geleverd vermogen L2", 2},
 	{"1-0:62.7.0", "Actueel geleverd vermogen L3", 2},
 	{"1-0:32.7.0", "Spanning L1", 3},
 	{"1-0:52.7.0", "Spanning L2", 3},
@@ -105,42 +109,36 @@ p1Var_t p1VarTable3Phases[] = {
 	{"", "", 0},
 };
 
-p1Var_t p1VarTable1Phase[] = {
-	{"1-0:21.7.0", "Actueel opgenomen vermogen", 1}, 
-	{"1-0:32.7.0", "Voltage", 3},
-	{"1-0:1.8.1", "Geleverd tarief 1", 0},
-	{"1-0:1.8.2", "Geleverd tarief 2", 0},
-	{"0-0:96.7.21", "Korte onderbrekingen", 0},
-	{"0-0:96.7.9", "Lange onderbrekingen", 0},
-	{"1-0:99.97.0", "Onderbrekingslog", 4},
-	{"1-0:32.32.0", "Spanningsdalen", 0},
-	{"1-0:32.36.0", "Spanningspieken", 0},	
-	{"", "", 0}
-};
+p1Var_t p1VarTable1Phase[] = {{"1-0:21.7.0", "Actueel opgenomen vermogen", 1}, {"1-0:32.7.0", "Voltage", 3},
+							  {"1-0:1.8.1", "Geleverd tarief 1", 0},		   {"1-0:1.8.2", "Geleverd tarief 2", 0},
+							  {"0-0:96.7.21", "Korte onderbrekingen", 0},	   {"0-0:96.7.9", "Lange onderbrekingen", 0},
+							  {"1-0:99.97.0", "Onderbrekingslog", 4},		   {"1-0:32.32.0", "Spanningsdalen", 0},
+							  {"1-0:32.36.0", "Spanningspieken", 0},		   {"", "", 0}};
 
-	// @formatter:on
+// @formatter:on
 
-	// p1Buffer points to '(' of value
-	int copyValue(char *src, char *dest){int len = 0;
-//	char *e;
-do {
-	src++;
-} while ((*src == '0') && (*(src + 1) != '.') && (*(src + 1) != '*')); // skip leading zeros values
+// p1Buffer points to '(' of value
+int copyValue(char *src, char *dest) {
+	int len = 0;
+	//	char *e;
+	do {
+		src++;
+	} while ((*src == '0') && (*(src + 1) != '.') && (*(src + 1) != '*')); // skip leading zeros values
 
-do {
-	len++;
-	if (*src != '*') // do not show '*'
-		*dest = *src;
-	else
-		*dest = ' ';
-	dest++;
-	src++;
-} while ((*src != ')'));
+	do {
+		len++;
+		if (*src != '*') // do not show '*'
+			*dest = *src;
+		else
+			*dest = ' ';
+		dest++;
+		src++;
+	} while ((*src != ')'));
 
-//	e = strchr(src, ')');  // search ')'
-//	strncpy(dest, src, e - src);  // add value
+	//	e = strchr(src, ')');  // search ')'
+	//	strncpy(dest, src, e - src);  // add value
 
-return len; //  e - src;  // return nr chars written in dest
+	return len; //  e - src;  // return nr chars written in dest
 }
 
 int copyName(char *src, char *dest) { return sprintf(dest, "%s=", src); }
@@ -158,13 +156,13 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 	float f;
 	logValue.power = 0;
 	logValue.deliveredPower = 0;
-	
-	p1Var_t * p1VarTable = p1VarTable1Phase;
-//	printf("chars: %d \n" , nrCharsInBuffer);
-	if ( nrCharsInBuffer > 600)
+
+	p1Var_t *p1VarTable = p1VarTable1Phase;
+	//	printf("chars: %d \n" , nrCharsInBuffer);
+	if (nrCharsInBuffer > 600)
 		_3Phases = true;
 
-	if ( _3Phases)
+	if (_3Phases)
 		p1VarTable = p1VarTable3Phases;
 	do {
 		b = strstr(p1Buffer, p1VarTable[n].p1ID); // find ID
@@ -194,6 +192,15 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 						logValue.power += f; // add power of 3 phases ( if present)
 						p += sprintf(p, "%d W", (int)f);
 					}
+					if (logValue.power > lastValue + GLICHVALUE) {
+						if (!glichDetected) {
+							logValue.power = lastValue; // skip this single sampe , replace by previous one
+							glichDetected = true;
+						}
+					} else
+						glichDetected = false;
+
+					lastValue = logValue.deliveredPower;
 #endif
 					break;
 
@@ -203,7 +210,7 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 #ifdef SIMULATE
 					simValue++;
 					p += sprintf(p, "%d W", 1000);
-					logValue.deliveredPower += 1000 ; // simValue; // add power of 3 phases ( if present)
+					logValue.deliveredPower += 1000; // simValue; // add power of 3 phases ( if present)
 #else
 					if (len) {
 						f *= 1000.0;
@@ -352,4 +359,3 @@ int clearLogScript(char *pBuffer, int count) {
 	}
 	return 0;
 }
-
