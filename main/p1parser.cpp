@@ -57,6 +57,7 @@
 #include "freertos/task.h"
 #include "main.h"
 #include "scripts.h"
+#include "ledTask.h"
 
 #define MEASINTERVAL 1 // interval for sensor in seconds
 #define LOGINTERVAL (5 * 60)
@@ -76,7 +77,7 @@ bool _3Phases;
 
 log_t logValue;
 log_t accumulator;
-int logPrescaler = 2;
+int logPrescaler = LOGINTERVAL;
 int glichCntr;
 int lastValue;
 
@@ -295,6 +296,7 @@ bool parseP1data(char *p1Buffer, int nrCharsInBuffer) {
 	vTaskDelay(20 / portTICK_PERIOD_MS);
 	gpio_set_level(LED_PIN, false);
 	gpio_set_level(LED_INV_PIN, true);
+	D1Flash= true;
 	return false;
 }
 

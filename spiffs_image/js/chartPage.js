@@ -11,8 +11,8 @@ const DAYLOGINTERVAL = (5 * 60); // min
 const NRITEMS = 4;
 const lineWidth = 3;
 
-const TABLEROWPWR			= 1;
-const TABLEROWVOLTAGE		= 2;
+const TABLEROWPWR = 1;
+const TABLEROWVOLTAGE = 2;
 
 var hourChart;
 var dayChart;
@@ -22,16 +22,19 @@ var firstRequest = true;
 var firstTime = true; // for table
 var averagedValues = [0, 0, 0, 0];
 var nrAverages = 0;
-var energyToday =0;
+var energyToday = 0;
 
 var accumulatedPwr = 0;
 var accumulatedDeliveredPwr = 0;
 var accumulatedVoltage = 0;
 
-var presc = 3;
+var presc = DAYLOGINTERVAL;
 var simVal = 0;
 var simTs = 0;
-var showDeliveredPower = true; 
+var showDeliveredPower = true;
+
+var usedEnergy;
+var deliveredEnergy;
 
 const Utils = ChartUtils.init();
 
@@ -43,7 +46,7 @@ function initChart() {
         hourChart = new Chart(ctx, configHour);
         var ctx = document.getElementById("dayChart");
         dayChart = new Chart(ctx, configDay);
-        
+
         var cb = document.getElementById('cb1');
         if (!cb.checked) {
             data.datasets.splice(1, 1);
@@ -217,6 +220,19 @@ function plot(chart, values, timeStamp) {
     }
 }
 
+
+function calcUsedAndDeliveredEnergy() {
+    const data = dayChart.data;
+    usedEnergy = 0;
+    deliveredEnergy = 0;
+    for (let index = 0; index < data.datasets[0].data.length; index++) {
+        usedEnergy += data.datasets[0].data[index];
+        if( showDeliveredPower)
+            deliveredEnergy += data.datasets[1].data[index];
+    }
+}
+
+
 function plotLog(chart, str) {
     var arr;
     var timeOffset;
@@ -259,19 +275,19 @@ function timer() {
     }
     var cb = document.getElementById('cb1');
     if (cb.checked) {
-        if( data.datasets.length == 1 ) {  // add
-            data.datasets.push(data.datasets[0] );
-            data2.datasets.push(data2.datasets[0] );
+        if (data.datasets.length == 1) {  // add
+            data.datasets.push(data.datasets[0]);
+            data2.datasets.push(data2.datasets[0]);
             firstRequest = true; //force new chart
             showDeliveredPower = true;
         }
     }
     else {
-        if( data.datasets.length == 2 ) { // remove 
+        if (data.datasets.length == 2) { // remove 
             data.datasets.splice(1, 1);
             data2.datasets.splice(1, 1);
-             firstRequest = true; //force new chart
-             showDeliveredPower = false;
+            firstRequest = true; //force new chart
+            showDeliveredPower = false;
         }
     }
     if (firstRequest) {
@@ -280,7 +296,7 @@ function timer() {
         plotLog(dayChart, arr);
         arr = getItem("getHourLogMeasValues");
         plotLog(hourChart, arr);
-
+        calcUsedAndDeliveredEnergy();
     }
     str = getInfo('getInfoValues', 'infoTable'); // make and fill table
     firstRequest = false;
@@ -318,31 +334,32 @@ function timer() {
 
     accumulatedPwr += pwr;
 
-    str = "Verbruik vandaag: " + (energyToday / 1000).toFixed(0) + "kWh,Verbruik: " + pwr.toFixed(0) + "W";
-    if ( showDeliveredPower)
-        str = str +",Opgewekt: " + deliveredPwr.toFixed(0) + "W";
-    
-    str = str +"\r";
+    str = "Verbruikt in 24Hr: " + (usedEnergy / 1000).toFixed(1) + " kWh,Verbruik: " + pwr.toFixed(0) + " W";
+    if (showDeliveredPower)
+        str = str + "   Opgewekt in 24hr: " + (deliveredEnergy / 1000).toFixed(1) + ",Opgewekt: " + deliveredPwr.toFixed(0) + "W";
+
+    str = str + "\r";
     makeInfoTable(str, "headTable");
     str = arr[0];
     s1 = tbl.rows[TABLEROWVOLTAGE].cells[1].innerHTML; // 230.5*W
     arr = s1.split("*");
     accumulatedVoltage += parseFloat(arr[0]);
 
-    str = (Date.now()/1000.0) .toFixed(1) + ',' + pwr.toFixed(1) + ',' + deliveredPwr.toFixed(1) + '\n';
-   // plotHourArray(str);
+    str = (Date.now() / 1000.0).toFixed(1) + ',' + pwr.toFixed(1) + ',' + deliveredPwr.toFixed(1) + '\n';
+    // plotHourArray(str);
     plotLog(hourChart, str);
 
     presc--;
-    //	presc = 0;
+
     if (presc == 0) {
-        presc = MINUTESPERTICK * 60;
-        accumulatedPwr /= (MINUTESPERTICK * 60);
-        accumulatedDeliveredPwr /= (MINUTESPERTICK * 60);
-        str = (Date.now()/1000.0).toFixed(1) + ',' + accumulatedPwr.toFixed(1) + ',' + accumulatedDeliveredPwr.toFixed(1) + '\n';
+        presc = DAYLOGINTERVAL;
+        accumulatedPwr /= DAYLOGINTERVAL;
+        accumulatedDeliveredPwr /= DAYLOGINTERVAL;
+        str = (Date.now() / 1000.0).toFixed(1) + ',' + accumulatedPwr.toFixed(1) + ',' + accumulatedDeliveredPwr.toFixed(1) + '\n';
         accumulatedPwr = 0;
         accumulatedDeliveredPwr = 0;
         plotLog(dayChart, str);
+        calcUsedAndDeliveredEnergy();
     }
 }
 

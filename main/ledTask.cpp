@@ -92,6 +92,7 @@ void LEDtask(void *pvParameters) {
 
 		if (D1Flash) {
 			led_strip_set_pixelColor(strip, 0, colors[COLOR_OFF]);
+			D1Flash = false;
 		}
 		if (D2Flash) {
 			led_strip_set_pixelColor(strip, 1, colors[COLOR_OFF]);
