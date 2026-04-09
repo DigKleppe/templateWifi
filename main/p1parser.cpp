@@ -64,7 +64,7 @@
 #define MAXDAYLOGVALUES ((24 * 60 * 60) / LOGINTERVAL) // for dayLog
 #define MAXHOURLOGVALUES 3600
 
-#define GLICHVALUE 300 // suppress GLICHCNT peaks if delta pwr above this value ( fridge!)
+#define GLICHVALUE 300 // suppress GLICHCNT peaks if delta pwr above this value (fridge!)
 #define GLICHCNT 2
 
 Log dayLog(MAXDAYLOGVALUES, sizeof(log_t));
