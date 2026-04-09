@@ -6,7 +6,7 @@ const MAXHOURPOINTS = 3600;
 
 const INFOTABLENAME = "sensorInfoTable";
 const REQUESTINTERVAL = 1;  // sec
-const DAYLOGINTERVAL = (5 * 60); // min
+const DAYLOGINTERVAL = (5 * 60); // sec
 
 const NRITEMS = 4;
 const lineWidth = 3;
@@ -230,6 +230,8 @@ function calcUsedAndDeliveredEnergy() {
         if( showDeliveredPower)
             deliveredEnergy += data.datasets[1].data[index];
     }
+    usedEnergy = usedEnergy * DAYLOGINTERVAL/3600; // to wH
+    deliveredEnergy = deliveredEnergy * DAYLOGINTERVAL/3600; // to wH
 }
 
 
@@ -336,7 +338,7 @@ function timer() {
 
     str = "Verbruikt in 24Hr: " + (usedEnergy / 1000).toFixed(1) + " kWh,Verbruik: " + pwr.toFixed(0) + " W";
     if (showDeliveredPower)
-        str = str + "   Opgewekt in 24hr: " + (deliveredEnergy / 1000).toFixed(1) + ",Opgewekt: " + deliveredPwr.toFixed(0) + "W";
+        str = str + ",Opgewekt in 24hr: " + (deliveredEnergy / 1000).toFixed(1) + ",Opgewekt: " + deliveredPwr.toFixed(0) + "W";
 
     str = str + "\r";
     makeInfoTable(str, "headTable");
