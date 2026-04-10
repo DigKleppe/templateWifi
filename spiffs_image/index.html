@@ -29,7 +29,17 @@
     <br>
     <button class="button-3" onclick="clearLog()">log wissen</button>
     <button class="button-3" onclick="clearChart()">grafiek wissen</button>
+   	<p>
+		<a  id="Hr_btn_writetofile" download="uurdata.csv" href="#"
+			class="button-3"" onclick="exportFile ( 'Hr_btn_writetofile', hourChart)">
+			export uurdata</a>
+		<a  id="Day_btn_writetofile" download="dagdata.csv" href="#"
+			class="button-3" onclick="exportFile ( 'Day_btn_writetofile', dayChart)">
+			export dagdata</a>
+	<p></p>
+
     <br>
+
     <button class="button-3" onclick="forgetWifi()">vergeet Wifi netwerk en reset</button>
 </body>
 

@@ -227,11 +227,11 @@ function calcUsedAndDeliveredEnergy() {
     deliveredEnergy = 0;
     for (let index = 0; index < data.datasets[0].data.length; index++) {
         usedEnergy += data.datasets[0].data[index];
-        if( showDeliveredPower)
+        if (showDeliveredPower)
             deliveredEnergy += data.datasets[1].data[index];
     }
-    usedEnergy = usedEnergy * DAYLOGINTERVAL/3600; // to wH
-    deliveredEnergy = deliveredEnergy * DAYLOGINTERVAL/3600; // to wH
+    usedEnergy = usedEnergy * DAYLOGINTERVAL / 3600; // to wH
+    deliveredEnergy = deliveredEnergy * DAYLOGINTERVAL / 3600; // to wH
 }
 
 
@@ -392,10 +392,46 @@ function simplot() {
         simTs++;
         simVal += 0.02;
     }
+    if ( presc > 3)
+       presc = 3;
+
     if (presc-- == 0) {
         plotLog(dayChart, value);
         presc = 3;
     }
     plotLog(hourChart, value);
-
 }
+
+function exportFile(downloadLinkId, chart) {
+    var data = chart.data;
+    //URL pointing to the Blob with the file contents
+    var objUrl = null;
+    //create the blob with file content, and attach the URL to the downloadlink; 
+    //NB: link must have the download attribute
+    //this method can go to your library
+    const d = new Date();
+
+    var contents = d.toUTCString() + "\n";
+    if (data.datasets.length > 0) {
+        for (let index = 0; index < data.datasets[0].data.length; index++) {
+            contents = contents + data.labels[index] + ',';
+            contents = contents + data.datasets[0].data[index].toFixed(0);
+            if (showDeliveredPower)
+                contents = contents + "," + data.datasets[1].data[index].toFixed(0) + ',';
+            contents = contents + '\n';
+        }
+    }
+
+    // revoke the old object URL to avoid memory leaks.
+    if (objUrl !== null) {
+        window.URL.revokeObjectURL(objUrl);
+    }
+    // create the object that contains the file data and that can be referred to with a URL
+    var data = new Blob([contents], { type: 'text/plain' });
+    objUrl = window.URL.createObjectURL(data);
+    // attach the object to the download link (styled as button)
+    var downloadLinkButton = document.getElementById(downloadLinkId);
+    downloadLinkButton.href = objUrl;
+}
+
+
